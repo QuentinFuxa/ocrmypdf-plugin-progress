@@ -26,13 +26,6 @@ This repository demonstrates how to integrate [ocrmypdf](https://github.com/ocrm
 
 ## Project Structure
 
-.
-├── demo.html
-├── fastapi-endpoints.py
-├── ocr_functions.py
-├── requirements.txt
-└── readme.md  (this file)
-
 1. **demo.html**  
    A simple HTML file showcasing an OCR upload form, progress bar, and result display.  
 2. **fastapi-endpoints.py**  
@@ -79,60 +72,68 @@ This repository demonstrates how to integrate [ocrmypdf](https://github.com/ocrm
    cd ocr-progress-demo
    ```
 
-	2.	Install Python dependencies:
+2.	Install Python dependencies:
 
     ```bash
     pip install -r requirements.txt
     ```
 
-	3.	Install system dependencies for OCRmyPDF if you haven’t already.
+3.	Install system dependencies for OCRmyPDF if you haven’t already.
 
 Refer to OCRmyPDF documentation for detailed installation instructions (e.g., Tesseract, Ghostscript, and additional system libraries).
 
-##Running the Demo
-	1.	Start the FastAPI server:
+## Running the Demo
+
+1.	Start the FastAPI server:
 
     ```python fastapi-endpoints.py```
 
 
-	2.	Open your browser at:
+2.	Open your browser at:
 
     ```http://localhost:8000```
 
 
-	3.	Upload a PDF or image from the main page and press the “Start OCR” button.
-	4.	Watch the progress bar update as OCRmyPDF processes your file.
-	5.	Once completed, click the “Download PDF” link to get the OCR-processed PDF.
+3.	Upload a PDF or image from the main page and press the “Start OCR” button.
+4.	Watch the progress bar update as OCRmyPDF processes your file.
+5.	Once completed, click the “Download PDF” link to get the OCR-processed PDF.
 
-How It Works
-	1.	Upload
+## How It Works
+
+1.	Upload
 A file (PDF or image) is uploaded to the /ocr-pdf endpoint. If the file is an image, it’s converted into PDF format on-the-fly using PIL.
-	2.	Background OCR
+2.	Background OCR
 The OCR process runs in a background task via BackgroundTasks from FastAPI.
 	•	ocrmypdf.ocr() is called with a custom plugin (MyProgressBar) that tracks progress events.
-	3.	Progress Updates
+3.	Progress Updates
 	•	The MyProgressBar class in ocr_functions.py receives regular updates during OCR.
 	•	These updates are stored in a global dictionary (_ocr_progress).
 	•	The /ocr-pdf/progress/ endpoint returns the current progress dictionary as JSON.
-	4.	Polling
+4.	Polling
 	•	The frontend’s JavaScript periodically calls the /ocr-pdf/progress/ endpoint (every 1 second, for example).
 	•	The progress bar is updated accordingly.
-	5.	Completion & Results
+5.	Completion & Results
 	•	When OCR completes, the final PDF becomes available, and the _ocr_progress dictionary indicates the process has terminated.
 	•	The frontend then calls /ocr-pdf/results/{file_id} to retrieve the download URL and displays a link to the new OCR-processed PDF.
 
-Additional Notes
-	•	Purpose of the custom plugin:
-This repository emphasizes the integration of a custom FastAPI plugin with ocrmypdf to expose progress updates to a web client. It’s not meant to be a full-fledged production-ready OCR service but rather a learning/demo project.
-	•	Extensibility:
-You can easily adapt this approach to:
-	•	Monitor progress for other tasks (e.g., video processing, data analysis).
-	•	Use WebSockets instead of HTTP polling to push progress updates in real-time.
-	•	Persist progress and result files in a database or cloud storage.
-	•	Dependencies:
-	•	Python >= 3.8 (tested on 3.9+).
-	•	ocrmypdf, Pillow (PIL), fastapi, uvicorn, etc.
-	•	Tesseract and other system requirements for ocrmypdf.
+## Additional Notes
 
-Feel free to explore, fork, and adapt to fit your needs!
+#### Purpose of the custom plugin:
+
+This repository emphasizes the integration of a custom FastAPI plugin with ocrmypdf to expose progress updates to a web client. It’s not meant to be a full-fledged production-ready OCR service but rather a learning/demo project.
+
+#### Extensibility:
+
+You can easily adapt this approach to:
+
+-  Monitor progress for other tasks (e.g., video processing, data analysis).
+- Use WebSockets instead of HTTP polling to push progress updates in real-time.
+- Persist progress and result files in a database or cloud storage.
+ 
+#### Dependencies:
+
+- Python >= 3.10 (tested on 3.10+).
+- ocrmypdf, Pillow (PIL), fastapi, uvicorn, etc.
+- Tesseract and other system requirements for ocrmypdf.
+
 
