@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>OCR Demo</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 16px;
+      }
+      .section {
+        margin-bottom: 16px;
+      }
+      .progress-bar {
+        width: 100%;
+        max-width: 300px;
+        height: 20px;
+        background-color: #ddd;
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .progress-bar-fill {
+        height: 100%;
+        background-color: #4caf50;
+        transition: width 0.3s;
+      }
+      .results {
+        margin-top: 8px;
+      }
+      .file-link {
+        color: blue;
+        text-decoration: underline;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>OCR Demo</h1>
+    <div class="section">
+      <label for="fileInput">Select a PDF (or image) to upload:</label>
+      <input type="file" id="fileInput" accept=".pdf,image/*" />
+      <button id="uploadButton">Start OCR</button>
+    </div>
+
+    <div class="section" id="progressSection" style="display: none;">
+      <div id="progressText"></div>
+      <div class="progress-bar">
+        <div class="progress-bar-fill" id="progressBarFill" style="width: 0%;"></div>
+      </div>
+    </div>
+
+    <div class="section" id="resultsSection" style="display: none;">
+      <h3>Results</h3>
+      <div id="resultsContainer"></div>
+    </div>
+
+    <script>
+      // Adjust to your server endpoint
+      const BASE_URL = "API_URL";
+      let fileUploaded = null;
+      let fileURL = null;
+      let ocrTaskId = null;
+      let pollingInterval = null;
+
+      const fileInput = document.getElementById("fileInput");
+      const uploadButton = document.getElementById("uploadButton");
+      const progressSection = document.getElementById("progressSection");
+      const progressText = document.getElementById("progressText");
+      const progressBarFill = document.getElementById("progressBarFill");
+      const resultsSection = document.getElementById("resultsSection");
+      const resultsContainer = document.getElementById("resultsContainer");
+
+      fileInput.addEventListener("change", (event) => {
+        fileUploaded = event.target.files[0] || null;
+        if (fileUploaded) {
+          fileURL = URL.createObjectURL(fileUploaded);
+        }
+      });
+
+      uploadButton.addEventListener("click", handleFileSend);
+
+      async function handleFileSend() {
+        if (!fileUploaded) {
+          alert("Please select a file first.");
+          return;
+        }
+
+        resultsSection.style.display = "none";
+        resultsContainer.innerHTML = "";
+        resetProgressUI();
+
+        const formData = new FormData();
+        formData.append("file", fileUploaded);
+        formData.append("name", fileUploaded.name);
+
+        try {
+          const response = await fetch(`${BASE_URL}/ocr-pdf`, {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error(`Server responded with ${response.status}`);
+          }
+
+          const data = await response.json();
+          ocrTaskId = data.id;
+          startPolling();
+        } catch (error) {
+          console.error("Error sending file:", error);
+          alert("Failed to upload. See console for details.");
+        } finally {
+          fileInput.value = "";
+          fileUploaded = null;
+          fileURL = null;
+        }
+      }
+
+      function startPolling() {
+        if (!ocrTaskId) return;
+        progressSection.style.display = "block";
+
+        pollProgress();
+        pollingInterval = setInterval(pollProgress, 1000);
+      }
+
+      async function pollProgress() {
+        try {
+          const response = await fetch(`${BASE_URL}/ocr-pdf/progress/`);
+          if (!response.ok) {
+            throw new Error(`Progress responded with ${response.status}`);
+          }
+          const progressData = await response.json();
+
+          updateProgressUI(progressData);
+
+          if (progressData?.terminated === true) {
+            clearInterval(pollingInterval);
+            fetchResults();
+          }
+
+        } catch (error) {
+          console.error("Error while fetching OCR progress:", error);
+          clearInterval(pollingInterval);
+        }
+      }
+
+      async function fetchResults() {
+        if (!ocrTaskId) return;
+        try {
+          const response = await fetch(`${BASE_URL}/ocr-pdf/results/${ocrTaskId}`);
+          if (!response.ok) {
+            throw new Error(`Results responded with ${response.status}`);
+          }
+          const data = await response.json();
+          const { download_url } = data || {};
+
+          displayFinalResults(download_url);
+          ocrTaskId = null;
+        } catch (error) {
+          console.error("Error while fetching final results:", error);
+        }
+      }
+
+      function resetProgressUI() {
+        progressSection.style.display = "none";
+        progressText.innerText = "";
+        progressBarFill.style.width = "0%";
+      }
+
+      function updateProgressUI(progressData) {
+        const { total, desc, unit, progress_bar } = progressData;
+        let percentValue = 0;
+        let textLabel = desc || "";
+
+        if (total && total > 0) {
+          percentValue = Math.round((progress_bar / total) * 100);
+          textLabel += ` — ${progress_bar} / ${total} ${unit}`;
+        } else if (unit === "%") {
+          percentValue = Math.round(progress_bar);
+          textLabel += ` — ${progress_bar}%`;
+        } else {
+          percentValue = 0;
+        }
+
+        progressText.innerText = textLabel;
+        progressBarFill.style.width = `${percentValue}%`;
+      }
+
+      function displayFinalResults(pdfUrl) {
+        resultsSection.style.display = "block";
+        resultsContainer.innerHTML = "";
+
+        if (pdfUrl) {
+          const pdfLink = document.createElement("div");
+          pdfLink.innerHTML = `
+            <strong>OCR PDF Result:</strong> 
+            <span class="file-link" onclick="window.open('${BASE_URL + pdfUrl}', '_blank')">
+              Download PDF
+            </span>
+          `;
+          resultsContainer.appendChild(pdfLink);
+        } else {
+          resultsContainer.innerHTML = "<strong>No download URL provided.</strong>";
+        }
+      }
+    </script>
+  </body>
+</html>

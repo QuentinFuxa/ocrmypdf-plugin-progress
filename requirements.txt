@@ -1,0 +1,4 @@
+ocrmypdf
+fastapi
+uvicorn
+python-multipart
