@@ -10,7 +10,7 @@ from fastapi import FastAPI, File, Form, UploadFile, BackgroundTasks
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from ocr_functions import do_ocr_in_background, get_ocr_progress
+from src.ocr_functions import do_ocr_in_background, get_ocr_progress
 
 logger = logging.getLogger("uvicorn.error")
 logger.setLevel(logging.DEBUG)
@@ -47,7 +47,7 @@ UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 
 
 # Load demo HTML for the root endpoint
-with open("demo.html", "r") as f:
+with open("src/demo.html", "r") as f:
     html = f.read()
 html = html.replace("API_URL", f"http://{args.host}:{args.port}")
 
