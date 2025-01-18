@@ -103,20 +103,20 @@ Refer to OCRmyPDF documentation for detailed installation instructions (e.g., Te
 ## How It Works
 
 1.	Upload
-A file (PDF or image) is uploaded to the /ocr-pdf endpoint. If the file is an image, it’s converted into PDF format on-the-fly using PIL.
+	- A file (PDF or image) is uploaded to the /ocr-pdf endpoint. If the file is an image, it’s converted into PDF format on-the-fly using PIL.
 2.	Background OCR
-The OCR process runs in a background task via BackgroundTasks from FastAPI.
-	•	ocrmypdf.ocr() is called with a custom plugin (MyProgressBar) that tracks progress events.
+	- The OCR process runs in a background task via BackgroundTasks from FastAPI.
+	- ocrmypdf.ocr() is called with a custom plugin (MyProgressBar) that tracks progress events.
 3.	Progress Updates
-	•	The MyProgressBar class in ocr_functions.py receives regular updates during OCR.
-	•	These updates are stored in a global dictionary (_ocr_progress).
-	•	The /ocr-pdf/progress/ endpoint returns the current progress dictionary as JSON.
+	- The MyProgressBar class in ocr_functions.py receives regular updates during OCR.
+	- These updates are stored in a global dictionary (_ocr_progress).
+	- The /ocr-pdf/progress/ endpoint returns the current progress dictionary as JSON.
 4.	Polling
-	•	The frontend’s JavaScript periodically calls the /ocr-pdf/progress/ endpoint (every 1 second, for example).
-	•	The progress bar is updated accordingly.
+	- The frontend’s JavaScript periodically calls the /ocr-pdf/progress/ endpoint.
+	- The progress bar is updated accordingly.
 5.	Completion & Results
-	•	When OCR completes, the final PDF becomes available, and the _ocr_progress dictionary indicates the process has terminated.
-	•	The frontend then calls /ocr-pdf/results/{file_id} to retrieve the download URL and displays a link to the new OCR-processed PDF.
+	- When OCR completes, the final PDF becomes available, and the _ocr_progress dictionary indicates the process has terminated.
+	- The frontend then calls /ocr-pdf/results/{file_id} to retrieve the download URL and displays a link to the new OCR-processed PDF.
 
 ## Additional Notes
 
