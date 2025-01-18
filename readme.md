@@ -2,6 +2,8 @@
 
 This repository demonstrates how to integrate [ocrmypdf](https://github.com/ocrmypdf/OCRmyPDF) with a custom plugin to track and report progress information. The goal is to show how you can use a **custom FastAPI plugin** to intercept OCR progress updates and **pass** that progress to **an external client**—in this case, a simple webpage that polls a REST API endpoint for status updates.
 
+![Demo Screenshot](src/demo.png)
+
 ## Table of Contents
 - [Overview](#overview)
 - [Project Structure](#project-structure)
